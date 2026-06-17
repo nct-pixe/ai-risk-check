@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI安心チェッカー｜結果プレビュー</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=M+PLUS+Rounded+1c:wght@400;700&display=swap');
+:root {
+  --mint:#6ECFB8;--sky:#74B8F0;--peach:#F5A88E;--lavender:#B5A6E8;--sun:#F7D070;
+  --bg:#F7F4FF;--card:#FFFFFF;--text:#2D2B3D;--muted:#7A7890;--border:#E8E4F4;
+  --radius:16px;--shadow:0 4px 24px rgba(100,90,160,0.09);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);}
+.wrap{max-width:680px;margin:0 auto;padding:1.5rem;}
+.card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:1.5rem;margin-bottom:1.25rem;}
+.section-title{font-family:'M PLUS Rounded 1c',sans-serif;font-size:17px;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;gap:8px;}
+.result-hero{background:linear-gradient(135deg,#E8D9FF,#D4EEFF);border-radius:var(--radius);padding:1.75rem;text-align:center;margin-bottom:1.25rem;}
+.result-emoji{font-size:44px;margin-bottom:.5rem;}
+.result-grade{font-family:'M PLUS Rounded 1c',sans-serif;font-size:28px;font-weight:700;margin-bottom:.5rem;}
+.result-msg{font-size:14px;color:#4A4860;line-height:1.6;}
+.score-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-top:1.25rem;}
+.score-tile{background:#F7F4FF;border-radius:12px;padding:12px;text-align:center;border:2px solid var(--border);}
+.score-tile .label{font-size:11px;color:var(--muted);margin-bottom:4px;}
+.score-tile .val{font-size:20px;font-weight:700;}
+.chart-wrap{max-width:320px;margin:0 auto;padding:.75rem 0;}
+.risk-card{border-radius:12px;padding:1.125rem;margin-bottom:.875rem;border-left:5px solid;}
+.risk-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+.risk-level-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;}
+.risk-title{font-size:15px;font-weight:700;}
+.risk-desc{font-size:13px;color:#4A4860;line-height:1.7;margin-bottom:10px;}
+.risk-high{background:#FFF0F0;border-color:#F5736A;}
+.risk-high .risk-level-badge{background:#FFDFDF;color:#C0392B;}
+.risk-high .risk-title{color:#C0392B;}
+.risk-mid{background:#FFF8EC;border-color:#F5B942;}
+.risk-mid .risk-level-badge{background:#FFEEC0;color:#9A6200;}
+.risk-mid .risk-title{color:#9A6200;}
+.risk-low{background:#F0FBF5;border-color:#6ECFB8;}
+.risk-low .risk-level-badge{background:#D4F2E9;color:#1A7A5E;}
+.risk-low .risk-title{color:#1A7A5E;}
+.tips-list{list-style:none;}
+.tips-list li{font-size:13px;padding:6px 0;display:flex;align-items:flex-start;gap:8px;line-height:1.5;border-top:1px solid rgba(0,0,0,.06);}
+.tips-list li:first-child{border-top:none;}
+.tips-list li::before{content:'✓';font-weight:700;flex-shrink:0;}
+.risk-high .tips-list li::before{color:#F5736A;}
+.risk-mid  .tips-list li::before{color:#F5B942;}
+.risk-low  .tips-list li::before{color:#6ECFB8;}
+.action-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;}
+.action-card{border-radius:12px;padding:1rem;}
+.action-card.today{background:#FFF0F9;border:2px solid #F5A8D4;}
+.action-card.week{background:#FFF8EC;border:2px solid #F5D08E;}
+.action-card.month{background:#EEF6FF;border:2px solid #8EC8F5;}
+.a-label{font-size:11px;font-weight:700;margin-bottom:6px;letter-spacing:.06em;}
+.action-card.today .a-label{color:#C0396B;}
+.action-card.week  .a-label{color:#9A6200;}
+.action-card.month .a-label{color:#2A6FAA;}
+.a-text{font-size:13px;line-height:1.5;}
+/* AD */
+.ad-banner{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border-radius:var(--radius);padding:2rem 1.5rem;margin-bottom:1.5rem;text-align:center;cursor:pointer;text-decoration:none;display:block;transition:transform .2s;}
+.ad-banner:hover{transform:translateY(-3px);}
+.ad-label{display:inline-block;background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);font-size:11px;font-weight:700;letter-spacing:.1em;padding:3px 12px;border-radius:99px;margin-bottom:.875rem;}
+.ad-title{font-family:'M PLUS Rounded 1c',sans-serif;font-size:22px;font-weight:700;color:white;margin-bottom:.5rem;line-height:1.3;}
+.ad-subtitle{font-size:13px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:1.25rem;}
+.ad-features{display:flex;gap:.625rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.25rem;}
+.ad-feat{background:rgba(255,255,255,.12);color:white;font-size:12px;padding:5px 12px;border-radius:99px;}
+.ad-cta{display:inline-block;background:linear-gradient(135deg,#7A5CF0,#5BAAF7);color:white;font-size:14px;font-weight:700;padding:12px 28px;border-radius:99px;}
+/* PRINT BUTTON */
+.print-btn-wrap{text-align:right;margin-bottom:1rem;}
+.print-btn{background:linear-gradient(135deg,#7A5CF0,#5BAAF7);color:white;border:none;border-radius:99px;padding:10px 24px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(122,92,240,.3);}
+.print-btn:hover{transform:translateY(-2px);}
+/* PRINT HEADER */
+.print-header{display:none;}
+/* PRINT CSS */
+@media print {
+  body{background:white !important;}
+  .print-btn-wrap,.ad-banner,.preview-badge{display:none !important;}
+  .wrap{padding:0 !important;max-width:100% !important;}
+  .card{box-shadow:none !important;border:1px solid #ddd !important;page-break-inside:avoid;margin-bottom:1rem !important;}
+  .risk-card{page-break-inside:avoid;}
+  .action-grid{page-break-inside:avoid;}
+  .chart-wrap{max-width:260px !important;}
+  .print-header{display:block !important;text-align:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid #7A5CF0;}
+  .print-header h2{font-size:20px;color:#7A5CF0;margin-bottom:4px;}
+  .print-header p{font-size:12px;color:#666;}
+}
+/* PREVIEW BADGE */
+.preview-badge{background:linear-gradient(135deg,#7A5CF0,#5BAAF7);color:white;text-align:center;padding:.75rem;font-size:13px;font-weight:700;letter-spacing:.05em;}
+</style>
+</head>
+<body>
+
+<div class="preview-badge">🔍 これは結果画面のプレビューです（サンプルデータで表示しています）</div>
+
+<div class="wrap">
+
+  <div class="print-header">
+    <h2>🛡️ AI安心チェッカー 診断レポート</h2>
+    <p id="printDate"></p>
+  </div>
+
+  <div class="print-btn-wrap">
+    <button class="print-btn" onclick="doPrint()">🖨️ 結果をPDFで保存・印刷</button>
+  </div>
+
+  <!-- RESULT HERO -->
+  <div class="result-hero">
+    <div class="result-emoji">🔶</div>
+    <div class="result-grade" style="color:#E67E22">グレード D：やや高リスク</div>
+    <div style="font-size:28px;font-weight:700;color:#E67E22;margin:.25rem 0">62<span style="font-size:16px;color:var(--muted)">/100</span></div>
+    <div class="result-msg">いくつかの重要なリスクがあります。優先度の高いものから対策を始めましょう。</div>
+  </div>
+
+  <!-- RADAR -->
+  <div class="card">
+    <div class="section-title">📊 5軸リスクレーダー</div>
+    <div class="chart-wrap"><canvas id="radarC" width="300" height="280"></canvas></div>
+    <div class="score-grid">
+      <div class="score-tile"><div class="label">🔐 プライバシー</div><div class="val" style="color:#74B8F0">72</div></div>
+      <div class="score-tile"><div class="label">🌀 情報信頼性</div><div class="val" style="color:#F5A88E">58</div></div>
+      <div class="score-tile"><div class="label">©️ 著作権</div><div class="val" style="color:#6ECFB8">45</div></div>
+      <div class="score-tile"><div class="label">🧠 依存</div><div class="val" style="color:#B5A6E8">68</div></div>
+      <div class="score-tile"><div class="label">🛡️ セキュリティ</div><div class="val" style="color:#F7D070">55</div></div>
+    </div>
+  </div>
+
+  <!-- RISK CARDS -->
+  <div class="card">
+    <div class="section-title">🔍 リスク詳細と対策</div>
+
+    <div class="risk-card risk-high">
+      <div class="risk-head"><span class="risk-level-badge">要注意</span><span class="risk-title">🔐 プライバシー（72点）</span></div>
+      <div class="risk-desc">AIに入力した情報が意図せず学習データとして使われたり、サービス側のセキュリティ事故により外部に漏れる可能性があります。</div>
+      <ul class="tips-list">
+        <li>本名・住所・電話番号などの個人情報はAIに入力しない</li>
+        <li>無料版サービスは「設定→チャット履歴オフ」などで学習を無効化できる場合があります</li>
+        <li>他人（家族・友人）の情報も同様にAIには入れない</li>
+        <li>共有端末での使用後は必ずログアウトする</li>
+      </ul>
+    </div>
+
+    <div class="risk-card risk-high">
+      <div class="risk-head"><span class="risk-level-badge">要注意</span><span class="risk-title">🧠 依存・思考力（68点）</span></div>
+      <div class="risk-desc">AIへの過度な依存は、自分で考える力・批判的思考力を低下させる「静かなリスク」です。特に学習・創作の場面では長期的な影響が懸念されます。</div>
+      <ul class="tips-list">
+        <li>AIの出力はあくまで「たたき台」。自分の言葉でリライトする習慣をつける</li>
+        <li>重要な判断や創作物は、まず自分で考えてからAIを補助的に使う</li>
+        <li>週1回はAIなしで文章を書く・問題を解く機会をつくる</li>
+      </ul>
+    </div>
+
+    <div class="risk-card risk-mid">
+      <div class="risk-head"><span class="risk-level-badge">やや注意</span><span class="risk-title">🌀 情報の信頼性（58点）</span></div>
+      <div class="risk-desc">AIは「もっともらしい嘘」を自信満々に答えることがあります（ハルシネーション）。存在しない研究・判例・数字を作り出すことも珍しくありません。</div>
+      <ul class="tips-list">
+        <li>AIの回答は必ず別のソース（公式サイト・論文）で確認する</li>
+        <li>医療・法律・投資の判断は専門家に相談し、AIを主な根拠にしない</li>
+      </ul>
+    </div>
+
+    <div class="risk-card risk-mid">
+      <div class="risk-head"><span class="risk-level-badge">やや注意</span><span class="risk-title">🛡️ セキュリティ（55点）</span></div>
+      <div class="risk-desc">AIを悪用したサイバー攻撃（精巧な詐欺メール・偽サイト）や、AIへの不用意な入力によるアカウント乗っ取りリスクが急増しています。</div>
+      <ul class="tips-list">
+        <li>パスワード・クレジットカード番号はAIに絶対入力しない</li>
+        <li>AIツールのアカウントに2段階認証を必ず設定する</li>
+      </ul>
+    </div>
+
+    <div class="risk-card risk-low">
+      <div class="risk-head"><span class="risk-level-badge">低リスク</span><span class="risk-title">©️ 著作権・権利（45点）</span></div>
+      <div class="risk-desc">AI生成の画像・文章が既存の著作物に似ている場合、著作権侵害となる可能性があります。商用利用や公開時はトラブルに発展することも。</div>
+      <ul class="tips-list">
+        <li>特定のキャラクター名・作家名を指定した生成を避ける</li>
+        <li>AI生成物に自分の言葉・加工・アイデアを加えて「自分の作品」にする</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ACTION PLAN -->
+  <div class="card">
+    <div class="section-title">🗓️ あなたへのアクションプラン</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:1rem;">最優先リスク「プライバシー」を中心にした行動計画です</p>
+    <div class="action-grid">
+      <div class="action-card today"><div class="a-label">📅 今日できること</div><div class="a-text">使っているAIサービスの「チャット履歴・学習設定」をオフにする</div></div>
+      <div class="action-card week"><div class="a-label">📆 今週やること</div><div class="a-text">個人情報をAIに入力しないルールを決め、メモしておく</div></div>
+      <div class="action-card month"><div class="a-label">🗓️ 今月の目標</div><div class="a-text">学習オプトアウト済みのサービスへ移行を検討する</div></div>
+    </div>
+  </div>
+
+  <!-- AD -->
+  <a href="https://dfyrbnoh.gensparkspace.com/" target="_blank" rel="noopener" class="ad-banner">
+    <div class="ad-label">📚 おすすめスクール</div>
+    <div style="font-size:36px;margin-bottom:.5rem;">🤖✨</div>
+    <div class="ad-title">リスクがわかったら、次は<br>「正しい使い方」を学ぼう</div>
+    <div class="ad-subtitle">AIライフスクール<br>専門知識ゼロから、安全で豊かなAI活用が学べる。<br>AIを"執事"のように使いこなし、人生をもっと自由に。</div>
+    <div class="ad-features">
+      <span class="ad-feat">✅ 月1回・自分のペースで</span>
+      <span class="ad-feat">✅ 専門用語なし</span>
+      <span class="ad-feat">✅ 安全な使い方も学べる</span>
+    </div>
+    <div class="ad-cta">AIライフスクールを見てみる →</div>
+  </a>
+
+</div>
+
+<script>
+setTimeout(function(){
+  const ctx = document.getElementById('radarC').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['プライバシー','情報の信頼性','著作権・権利','依存・思考力','セキュリティ'],
+      datasets: [{
+        label: 'リスクスコア',
+        data: [72, 58, 45, 68, 55],
+        backgroundColor: 'rgba(122,92,240,0.15)',
+        borderColor: '#7A5CF0', borderWidth: 2.5,
+        pointBackgroundColor: ['#74B8F0','#F5A88E','#6ECFB8','#B5A6E8','#F7D070'],
+        pointBorderColor: '#fff', pointRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { r: {
+        min:0, max:100,
+        ticks: { stepSize:25, font:{size:11}, color:'#aaa', backdropColor:'transparent' },
+        grid: { color:'#E8E4F4' },
+        angleLines: { color:'#E8E4F4' },
+        pointLabels: { font:{size:12, family:"'Noto Sans JP'"}, color:'#2D2B3D' }
+      }},
+      plugins: { legend: { display: false } }
+    }
+  });
+}, 100);
+
+function doPrint(){
+  document.getElementById('printDate').textContent = '診断日：' + new Date().toLocaleDateString('ja-JP', {year:'numeric', month:'long', day:'numeric'});
+  window.print();
+}
+</script>
+</body>
+</html>
