@@ -616,7 +616,6 @@ function renderQ(){
       answers[current]=o.s;
       document.querySelectorAll('.opt').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
-      document.getElementById('btnNext').disabled=false;
       // auto-advance after short delay
       setTimeout(()=>{
         if(current<QUESTIONS.length-1){current++;renderQ();}
